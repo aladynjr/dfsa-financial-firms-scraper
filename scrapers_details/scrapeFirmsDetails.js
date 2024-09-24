@@ -16,6 +16,7 @@ const proxyPass = process.env.PROXY_PASS || 'e6c374e4-13ed-4f4a-9ed1-8f31e792048
 const proxyUrl = `http://${proxyUser}:${proxyPass}@${proxyHost}:${proxyPort}`;
 const httpsAgent = new HttpsProxyAgent(proxyUrl);
 const resultsDir = path.join('results');
+const listsDir = path.join('lists');
 const firmsDir = path.join(resultsDir, 'firms');
 
 let totalFirms = 0;
@@ -213,7 +214,7 @@ async function scrapeFirms() {
 
     console.log(clc.cyan('Reading firms list from JSON file...'));
 
-    const firmsListPath = path.join(resultsDir, 'firms_list.json');
+    const firmsListPath = path.join(listsDir, 'firms_list.json');
     const firmsList = JSON.parse(fs.readFileSync(firmsListPath, 'utf8'));
 
     totalFirms = firmsList.length;
@@ -226,7 +227,7 @@ async function scrapeFirms() {
     console.log(clc.blue(`Resuming scraping from firm ${existingFirmsCount + 1}`));
 
     const allFirmsData = [];
-    const batchSize = 1;
+    const batchSize = 5;
     processedFirms = existingFirmsCount;
 
     for (let i = 0; i < remainingFirms.length; i += batchSize) {

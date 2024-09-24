@@ -6,6 +6,7 @@ const clc = require('cli-color');
 const { parse } = require('json2csv');
 
 const resultsDir = path.join('results');
+const listsDir = path.join('lists');
 const passportedFundsDir = path.join(resultsDir, 'passported_funds');
 let totalFunds = 0;
 let processedFunds = 0;
@@ -117,7 +118,7 @@ async function scrapePassportedFundsDetails() {
 
   console.log(clc.cyan('Reading passported funds list from JSON file...'));
 
-  const passportedFundsListPath = path.join(resultsDir, 'passported_funds_list.json');
+  const passportedFundsListPath = path.join(listsDir, 'passported_funds_list.json');
   if (!fs.existsSync(passportedFundsListPath)) {
     console.log(clc.red('Error: passported_funds_list.json not found. Please run scrapePassportedFundsList first.'));
     return;

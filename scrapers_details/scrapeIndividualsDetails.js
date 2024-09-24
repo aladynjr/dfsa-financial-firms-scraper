@@ -6,6 +6,7 @@ const clc = require('cli-color');
 const path = require('path');
 
 const resultsDir = path.join('results');
+const listsDir = path.join('lists');
 const individualsDir = path.join(resultsDir, 'individuals');
 let totalIndividuals = 0;
 let processedIndividuals = 0;
@@ -152,7 +153,7 @@ async function scrapeIndividuals() {
 
     console.log(clc.cyan('Reading individuals list from JSON file...'));
 
-    const individualsListPath = path.join(resultsDir, 'individuals_list.json');
+    const individualsListPath = path.join(listsDir, 'individuals_list.json');
     const individualsList = JSON.parse(fs.readFileSync(individualsListPath, 'utf8'));
 
     totalIndividuals = individualsList.length;
@@ -165,7 +166,7 @@ async function scrapeIndividuals() {
     console.log(clc.blue(`Resuming scraping from individual ${existingIndividualsCount + 1}`));
 
     const allIndividualsData = [];
-    const batchSize = 1;
+    const batchSize = 10;
     processedIndividuals = existingIndividualsCount;
 
     for (let i = 0; i < remainingIndividuals.length; i += batchSize) {

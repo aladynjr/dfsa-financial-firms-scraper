@@ -6,6 +6,7 @@ const { parse } = require('json2csv');
 const clc = require('cli-color');
 
 const resultsDir = path.join('results');
+const listsDir = path.join('lists');
 const fundsDir = path.join(resultsDir, 'funds');
 let totalFunds = 0;
 let processedFunds = 0;
@@ -174,16 +175,66 @@ async function processBatch(batch) {
   const batchResults = await Promise.all(batchPromises);
   return batchResults.filter(result => result !== null);
 }
+function getAllFields(data) {
+  const fields = new Set();
+  data.forEach(item => {
+    Object.keys(item).forEach(key => {
+      if (typeof item[key] === 'object' && item[key] !== null) {
+        Object.keys(item[key]).forEach(nestedKey => {
+          fields.add(`${key}.${nestedKey}`);
+        });
+      } else {
+        fields.add(key);
+      }
+    });
+  });
+  return Array.from(fields);
+}
 
+function flattenObject(obj, prefix = '') {
+  const flattened = {};
+  Object.keys(obj).forEach(key => {
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      Object.assign(flattened, flattenObject(obj[key], `${prefix}${key}.`));
+    } else {
+      flattened[`${prefix}${key}`] = obj[key];
+    }
+  });
+  return flattened;
+}
+
+function sortAndGroupFields(fields) {
+  // Group fields by their prefix
+  const groupedFields = fields.reduce((acc, field) => {
+    const prefix = field.split('.')[0];
+    if (!acc[prefix]) {
+      acc[prefix] = [];
+    }
+    acc[prefix].push(field);
+    return acc;
+  }, {});
+
+  // Sort fields within each group
+  Object.keys(groupedFields).forEach(prefix => {
+    groupedFields[prefix].sort();
+  });
+
+  // Sort the prefixes
+  const sortedPrefixes = Object.keys(groupedFields).sort();
+
+  // Flatten the grouped and sorted fields
+  return sortedPrefixes.flatMap(prefix => groupedFields[prefix]);
+}
 async function scrapeFundsDetails() {
   console.log(clc.cyan('Starting Funds Details scraper...'));
 
+  ensureDirectoryExistence(listsDir);
   ensureDirectoryExistence(resultsDir);
   ensureDirectoryExistence(fundsDir);
 
   console.log(clc.cyan('Reading funds list from JSON file...'));
 
-  const fundsListPath = path.join(resultsDir, 'funds_list.json');
+  const fundsListPath = path.join(listsDir, 'funds_list.json');
   const fundsList = JSON.parse(fs.readFileSync(fundsListPath, 'utf8'));
 
   totalFunds = fundsList.length;
@@ -192,25 +243,29 @@ async function scrapeFundsDetails() {
   const existingFundsCount = getExistingFundsCount();
   console.log(clc.yellow(`Found ${existingFundsCount} existing fund JSON files`));
 
-  const remainingFunds = fundsList.slice(existingFundsCount);
-  console.log(clc.blue(`Resuming scraping from fund ${existingFundsCount + 1}`));
+  if (existingFundsCount === totalFunds) {
+    console.log(clc.green('All funds have already been processed. Skipping fetching step.'));
+  } else {
+    const remainingFunds = fundsList.slice(existingFundsCount);
+    console.log(clc.blue(`Resuming scraping from fund ${existingFundsCount + 1}`));
 
-  const allFundsData = [];
-  const batchSize = 1;
-  processedFunds = existingFundsCount;
+    const allFundsData = [];
+    const batchSize = 1;
+    processedFunds = existingFundsCount;
 
-  for (let i = 0; i < remainingFunds.length; i += batchSize) {
-    const batch = remainingFunds.slice(i, i + batchSize);
-    console.log(clc.yellow(`Processing batch ${Math.floor((i + existingFundsCount) / batchSize) + 1}`));
-    const batchResults = await processBatch(batch);
-    allFundsData.push(...batchResults);
+    for (let i = 0; i < remainingFunds.length; i += batchSize) {
+      const batch = remainingFunds.slice(i, i + batchSize);
+      console.log(clc.yellow(`Processing batch ${Math.floor((i + existingFundsCount) / batchSize) + 1}`));
+      const batchResults = await processBatch(batch);
+      allFundsData.push(...batchResults);
 
-    const remainingFundsCount = totalFunds - processedFunds;
-    const remainingPercentage = (remainingFundsCount / totalFunds) * 100;
-    console.log(clc.blue(`Remaining: ${remainingFundsCount} funds (${remainingPercentage.toFixed(2)}%)`));
+      const remainingFundsCount = totalFunds - processedFunds;
+      const remainingPercentage = (remainingFundsCount / totalFunds) * 100;
+      console.log(clc.blue(`Remaining: ${remainingFundsCount} funds (${remainingPercentage.toFixed(2)}%)`));
+    }
+
+    console.log(clc.green(`Scraped and saved details for ${allFundsData.length} new funds`));
   }
-
-  console.log(clc.green(`Scraped and saved details for ${allFundsData.length} new funds`));
 
   // Create consolidated JSON file
   console.log(clc.yellow('Creating consolidated JSON file...'));
@@ -223,8 +278,20 @@ async function scrapeFundsDetails() {
 
   // Convert consolidated JSON to CSV
   console.log(clc.yellow('Converting consolidated JSON to CSV...'));
-  const fields = [...new Set(allExistingFunds.flatMap(Object.keys))];
-  const allFundsCsvContent = parse(allExistingFunds, { fields });
+  let fields = getAllFields(allExistingFunds);
+  fields = sortAndGroupFields(fields);
+
+  const flattenedFunds = allExistingFunds.map(fund => {
+    const flattened = flattenObject(fund);
+    fields.forEach(field => {
+      if (!(field in flattened)) {
+        flattened[field] = 'N/A';
+      }
+    });
+    return flattened;
+  });
+
+  const allFundsCsvContent = parse(flattenedFunds, { fields });
   fs.writeFileSync(path.join(resultsDir, 'all_funds.csv'), allFundsCsvContent);
   console.log(clc.green('Created consolidated CSV file: all_funds.csv'));
 }
