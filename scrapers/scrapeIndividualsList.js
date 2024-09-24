@@ -102,9 +102,9 @@ function removeDuplicates(individuals) {
 
 async function saveResults() {
   try {
-    const resultsDir = path.join(__dirname, '..', 'results');
-    await fs.mkdir(resultsDir, { recursive: true });
-    const filePath = path.join(resultsDir, 'individuals_list.json');
+    const listsDir = path.join(__dirname, '..', 'lists');
+    await fs.mkdir(listsDir, { recursive: true });
+    const filePath = path.join(listsDir, 'individuals_list.json');
 
     // Remove duplicates before saving
     const uniqueIndividuals = removeDuplicates(allIndividuals);

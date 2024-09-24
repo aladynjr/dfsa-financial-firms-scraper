@@ -3,6 +3,7 @@
     "axios": "^1.7.7",
     "cheerio": "^1.0.0",
     "cli-color": "^2.0.4",
+    "csv-stringify": "^6.5.1",
     "dotenv": "^16.4.5",
     "https-proxy-agent": "^5.0.1",
     "json2csv": "^6.0.0-alpha.2"

@@ -48,8 +48,8 @@ function ensureDirectoryExistence(dirPath) {
 async function scrapeFundsList() {
   console.log(clc.cyan('Starting Funds List scraper...'));
 
-  const resultsDir = path.join('results');
-  ensureDirectoryExistence(resultsDir);
+  const listsDir = path.join('lists');
+  ensureDirectoryExistence(listsDir);
 
   console.log(clc.cyan('Scraping Funds List...'));
 
@@ -77,7 +77,7 @@ async function scrapeFundsList() {
   }
 
 
-  fs.writeFileSync(path.join(resultsDir, 'funds_list.json'), JSON.stringify(allFunds, null, 2));
+  fs.writeFileSync(path.join(listsDir, 'funds_list.json'), JSON.stringify(allFunds, null, 2));
   console.log(clc.green(`Scraped and saved ${allFunds.length} funds to funds_list.json`));
 }
 

@@ -51,8 +51,8 @@ function ensureDirectoryExistence(dirPath) {
 async function scrapePassportedFundsList() {
   console.log(clc.cyan('Starting Passported Funds List scraper...'));
 
-  const resultsDir = path.join('results');
-  ensureDirectoryExistence(resultsDir);
+  const listsDir = path.join('lists');
+  ensureDirectoryExistence(listsDir);
 
   console.log(clc.cyan('Scraping Passported Funds List...'));
 
@@ -78,7 +78,7 @@ async function scrapePassportedFundsList() {
     url: getFullUrl(fund.href)
   }));
 
-  fs.writeFileSync(path.join(resultsDir, 'passported_funds_list.json'), JSON.stringify(passportedFundsListWithUrls, null, 2));
+  fs.writeFileSync(path.join(listsDir, 'passported_funds_list.json'), JSON.stringify(passportedFundsListWithUrls, null, 2));
   console.log(clc.green(`Scraped and saved ${passportedFundsListWithUrls.length} passported funds to passported_funds_list.json`));
 }
 

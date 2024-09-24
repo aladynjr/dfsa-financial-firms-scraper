@@ -47,8 +47,8 @@ function ensureDirectoryExistence(dirPath) {
 async function scrapeAllFirmsList() {
     console.log(clc.cyan('Starting Firms List scraper...'));
 
-    const resultsDir = path.join('results');
-    ensureDirectoryExistence(resultsDir);
+    const listsDir = path.join('lists');
+    ensureDirectoryExistence(listsDir);
 
     const allFirms = [];
     const totalPages = 95;
@@ -67,7 +67,7 @@ async function scrapeAllFirmsList() {
 
     // Save the results as JSON
     const jsonContent = JSON.stringify(allFirms, null, 2);
-    fs.writeFileSync(path.join(resultsDir, 'firms_list.json'), jsonContent);
+    fs.writeFileSync(path.join(listsDir, 'firms_list.json'), jsonContent);
     console.log(clc.green('Saved results to results/firms_list.json'));
 }
 
